@@ -108,7 +108,7 @@
   <p class="sub">테스트는 이미 끝났어요.<br>이제 매일의 독해와 생각을 MY에 차곡차곡 저장할 수 있어요.</p>
   <div class="auth-choice">
     <button class="auth-btn kakao" onclick="showD('nickname')">🟡 카카오로 계속하기</button>
-    <button class="auth-btn google" onclick="showD('nickname')">G&nbsp;&nbsp; Google로 계속하기</button>
+    <button class="auth-btn google" onclick="signInWithGoogle()">G&nbsp;&nbsp; Google로 계속하기</button>
     <div class="auth-note">
       로그인하면 READLY 이용약관 및 개인정보처리방침에 동의합니다.<br>
       READLY는 로그인에 필요한 최소한의 정보만 사용합니다.
@@ -282,7 +282,18 @@ function escapeHtml(str){return String(str).replace(/[&<>'"]/g,function(c){retur
 function react(b){b.classList.toggle('on')}
 function sort(k,b){document.querySelectorAll('.sort button').forEach(x=>x.classList.remove('on'));b.classList.add('on');let f=$('feed'),a=[...f.children];if(k==='different')a.sort((x,y)=>(y.dataset.kind==='different')-(x.dataset.kind==='different'));if(k==='new')a.sort((x,y)=>(y.dataset.kind==='new')-(x.dataset.kind==='new'));a.forEach(x=>f.appendChild(x))}
 function backToLanding(){$('daily').classList.add('hidden');$('landing').classList.remove('hidden');scrollTo(0,0)}
+async function signInWithGoogle(){
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin + window.location.pathname
+    }
+  });
 
+  if (error) {
+    alert('Google 로그인에 실패했습니다: ' + error.message);
+  }
+}
 function finishSignup(){
   const input=document.getElementById('nicknameInput');
   const name=(input && input.value.trim()) || '읽는사람';
