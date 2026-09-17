@@ -251,14 +251,65 @@ $('txt').addEventListener('input',e=>{
   localStorage.setItem('readly_answer_draft', e.target.value);
 });
 function submitAnswer(){
-  const answer=$('txt').value.trim();
-  const thought=(($('expandThought')||{}).value||'').trim();
-  if(!answer){alert('먼저 자신의 이해를 짧게라도 작성해보세요.');return}
-  localStorage.setItem('readly_today_answer', JSON.stringify({answer:answer, thought:thought, date:new Date().toLocaleDateString('ko-KR')}));
+  const answer = $('txt').value.trim();
+  const thought = (typeof $('expandThought') !== 'undefined' && $('expandThought'))
+    ? $('expandThought').value.trim()
+    : '';
+
+  if(!answer){
+    alert('먼저 자신의 이해를 짧게라도 작성해보세요.');
+    return;
+  }
+
+  localStorage.setItem(
+    'readly_today_answer',
+    JSON.stringify({
+      answer: answer,
+      thought: thought,
+      date: new Date().toLocaleDateString('ko-KR')
+    })
+  );
+
   localStorage.removeItem('readly_answer_draft');
   localStorage.removeItem('readly_expanded_thought');
+
+  const feed = $('feed');
+
+  // 기존에 추가된 내 답변이 있다면 제거
+  const oldMine = document.getElementById('my-answer-card');
+  if(oldMine) oldMine.remove();
+
+  // 내 답변 카드 생성
+  const card = document.createElement('article');
+  card.className = 'answer-card';
+  card.id = 'my-answer-card';
+  card.dataset.kind = 'new';
+
+  card.innerHTML = `
+    <div class="person">
+      <span class="avatar">나</span>
+      나 <span class="time">· 방금 전</span>
+    </div>
+
+    <div class="answer"></div>
+
+    <span class="tag">✏️ 내 답변</span>
+
+    <div class="react">
+      <button onclick="react(this)">💡 새로운 관점이에요</button>
+      <button onclick="react(this)">🎯 핵심을 잘 짚었어요</button>
+    </div>
+  `;
+
+  // 입력한 답변을 카드에 표시
+  card.querySelector('.answer').textContent = answer;
+
+  // 다른 사람들의 답변보다 내 답변을 가장 위에 표시
+  feed.prepend(card);
+
   showD('compare');
 }
+
 function loadDrafts(){
   const a=localStorage.getItem('readly_answer_draft')||'';
   const t=localStorage.getItem('readly_expanded_thought')||'';
