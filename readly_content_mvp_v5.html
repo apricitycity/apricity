@@ -58,7 +58,16 @@
 .thought-node{background:#fff;border:1px solid #ddd;border-radius:99px;padding:7px 11px;font-size:11px}
 .optional-note{font-size:11px;color:#999;margin-top:8px}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://hhnjljrfqegummqujjry.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_1v7vwLUiRtDtgT_gltYNLw_tP5NWuvp';
 
+  const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+</script>
 </head>
 <body>
 <div id="landing">
