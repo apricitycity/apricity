@@ -279,38 +279,24 @@ async function loadCurrentContent(){
     .from('contents')
     .select('id,title,passage,question,published_at')
     .lte('published_at', new Date().toISOString())
-    .order('published_at', { ascending:false })
-    .limit(1)
-    .maybeSingle();
+    .order('published_at', { ascending:false });
 
-  if(error || !data){
+  if(error || !data || !data.length){
     console.error('콘텐츠 불러오기 오류:', error);
+    const box = $('archiveList');
+    if(box) box.innerHTML = '<div class="archive-empty">글을 불러오지 못했어요.</div>';
     return false;
   }
 
-  await applyContent(data);
-  return true;
-}
+  await applyContent(data[0]);
 
-async function loadArchive(){
   const box = $('archiveList');
-  if(!box) return;
-  const { data, error } = await supabaseClient
-    .from('contents')
-    .select('id,title,published_at')
-    .lte('published_at', new Date().toISOString())
-    .order('published_at', { ascending:false });
+  if(!box) return true;
 
-  if(error){
-    console.error('지난 글 불러오기 오류:', error);
-    box.innerHTML = '<div class="archive-empty">지난 글을 불러오지 못했어요.</div>';
-    return;
-  }
-
-  const older = (data || []).slice(1);
+  const older = data.slice(1);
   if(!older.length){
     box.innerHTML = '<div class="archive-empty">아직 지난 글이 없어요. 다음 글이 공개되면 이곳에 쌓입니다.</div>';
-    return;
+    return true;
   }
 
   box.innerHTML = '';
@@ -347,7 +333,7 @@ async function loadArchive(){
   });
 }
 
-async function goDaily(){$('result').classList.add('hidden');$('daily').classList.remove('hidden');await loadCurrentContent();await loadArchive();showD('dhome')}
+async function goDaily(){$('result').classList.add('hidden');$('daily').classList.remove('hidden');await loadCurrentContent();showD('dhome')}
 function saveDailyState(id){
   localStorage.setItem('readly_daily_screen', id);
 }
