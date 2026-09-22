@@ -64,8 +64,13 @@
   const SUPABASE_URL = 'https://hhnjljrfqegummqujjry.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_1v7vwLUiRtDtgT_gltYNLw_tP5NWuvp';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-  // 오늘의 READLY 콘텐츠를 식별하는 고정 ID
-  const DAILY_CONTENT_ID = 'daily-001';
+  // DB에서 불러온 현재 콘텐츠. DB 연결이 실패해도 기존 콘텐츠로 화면이 열리도록 기본값을 둡니다.
+  let currentContent = {
+    id: 'daily-001',
+    title: '정보가 많을수록 더 좋은 결정을 할까?',
+    passage: 'People often assume that having more information leads to better decisions. After all, more information should help us understand a situation more clearly.\n\nBut having more information can also make decisions harder. When people are given too many details, they may spend more time comparing options and become less certain about what actually matters.\n\nIn other words, the problem is not always a lack of information. Sometimes, it is knowing what to ignore.',
+    question: '이 글의 핵심 내용을 자유롭게 설명해보세요.'
+  };
 
 async function signInWithGoogle() {
   sessionStorage.setItem('readly_auth_intent', 'nickname');
@@ -105,9 +110,9 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 <div id="result" class="hidden"><div class="testnav"><div class="wrap"><button class="logo home-logo" type="button" onclick="goHome()" aria-label="APRICITY 홈">APRICITY</button><div style="font-size:13px;color:#888">독해력 진단 결과</div></div></div><main class="resultmain"><section class="rhead"><div class="kicker">YOUR READING PROFILE</div><div id="level" class="level"></div><div id="score" class="score"></div><p id="diag" class="diag"></p></section><h3>당신의 독해 프로필</h3><div id="answers" class="answers"></div><div class="reason"><h2>그렇다면, 독해력은 어떻게 키울까요?</h2><p>독해력은 한 번의 테스트 점수로 완성되는 능력이 아닙니다. <strong>매일 조금씩 읽고, 스스로 생각하고, 내 말로 설명하는 과정</strong>을 반복하면서 만들어집니다.</p><p>그래서 APRICITY는 정답을 알려주는 데서 끝나지 않습니다. 오늘의 짧은 영어 원문을 먼저 스스로 읽고, 다른 사람들의 해석과 관점을 만나며 내가 놓친 생각을 발견하도록 돕습니다.</p><div class="steps"><div class="step"><b>READ</b>원문 읽기</div><div class="step"><b>THINK</b>스스로 생각</div><div class="step"><b>EXPLAIN</b>내 말로 설명</div><div class="step"><b>COMPARE</b>다른 생각 만나기</div><div class="step"><b>REFLECT</b>다시 생각하기</div></div></div><div style="text-align:center;margin-top:32px"><button class="cta" onclick="goDaily()">오늘의 5분 독해 시작 →</button></div></main></div>
 
 <div id="daily" class="hidden"><header class="dailyhead"><button class="logo home-logo" type="button" onclick="goHome()" aria-label="APRICITY 홈">APRICITY</button><div style="font-size:13px;color:#777">🔥 6일째 독해 습관</div></header><main class="daily-main">
-<section id="dhome" class="screen active"><div class="ey">TODAY'S 5-MINUTE READING</div><h1>같은 글을 읽고,<br>다른 생각을 만나보세요.</h1><p class="sub">오늘은 <b>‘정보가 많을수록 더 좋은 결정을 할까?’</b>를 읽습니다. 먼저 혼자 읽고, 자신의 말로 설명한 뒤 다른 독자들의 생각을 만나보세요.</p><div class="meta"><span class="pill">약 5분</span><span class="pill">1개의 글</span><span class="pill dark">오늘의 독해 근육 · 핵심 추론</span></div><div class="card"><h2>오늘의 목표</h2><p>문장 하나하나를 해석하기보다 <b>글 전체가 무엇을 말하는지</b> 먼저 파악해봅니다.</p><div class="actions"><button class="btn" onclick="showD('read')">읽기 시작 →</button></div></div></section>
-<section id="read" class="screen"><button class="pillbtn" onclick="showD('dhome')">← 돌아가기</button><div class="ey" style="margin-top:20px">01 · READ</div><h2>먼저 스스로 읽어보세요.</h2><p class="sub">번역기는 잠시 내려두어도 좋습니다. 완벽한 해석보다 전체 의미를 먼저 잡아보세요.</p><div class="card"><div class="reading"><p>People often assume that having more information leads to better decisions. After all, more information should help us understand a situation more clearly.</p><p>But having more information can also make decisions harder. When people are given too many details, they may spend more time comparing options and become less certain about what actually matters.</p><p>In other words, the problem is not always a lack of information. Sometimes, it is knowing what to ignore.</p></div><div class="tip">💡 “그래서 이 글이 하고 싶은 말은 뭐지?”를 생각해보세요.</div><div class="actions"><button class="btn" onclick="showD('write')">다 읽었어요 →</button></div></div></section>
-<section id="write" class="screen"><button class="pillbtn" onclick="showD('read')">← 글 다시 보기</button><div class="ey" style="margin-top:20px">02 · EXPLAIN</div><h2>먼저, 내 생각을 설명해보세요.</h2><p>다른 사람의 답변을 보기 전에 <b>내가 이해한 내용을 내 말로</b> 정리해봅니다.</p><div class="lang"><button id="ko" class="on" onclick="lang('ko')">한국어</button><button id="en" onclick="lang('en')">English</button></div><div class="question"><small>TODAY'S QUESTION</small><b>이 글의 핵심 내용을 자유롭게 설명해보세요.</b></div><div class="textarea-wrap"><textarea id="txt" maxlength="300" placeholder="내가 이해한 내용을 자유롭게 써보세요."></textarea><div class="count"><span id="cnt">0</span> / 300</div></div><p class="sub" style="font-size:13px">정답을 맞히는 문제가 아닙니다. 내가 어떻게 이해했는지가 중요합니다.</p>
+<section id="dhome" class="screen active"><div class="ey">TODAY'S 5-MINUTE READING</div><h1>같은 글을 읽고,<br>다른 생각을 만나보세요.</h1><p class="sub">오늘은 <b id="contentTitle">‘정보가 많을수록 더 좋은 결정을 할까?’</b>를 읽습니다. 먼저 혼자 읽고, 자신의 말로 설명한 뒤 다른 독자들의 생각을 만나보세요.</p><div class="meta"><span class="pill">약 5분</span><span class="pill">1개의 글</span><span class="pill dark">오늘의 독해 근육 · 핵심 추론</span></div><div class="card"><h2>오늘의 목표</h2><p>문장 하나하나를 해석하기보다 <b>글 전체가 무엇을 말하는지</b> 먼저 파악해봅니다.</p><div class="actions"><button class="btn" onclick="showD('read')">읽기 시작 →</button></div></div></section>
+<section id="read" class="screen"><button class="pillbtn" onclick="showD('dhome')">← 돌아가기</button><div class="ey" style="margin-top:20px">01 · READ</div><h2>먼저 스스로 읽어보세요.</h2><p class="sub">번역기는 잠시 내려두어도 좋습니다. 완벽한 해석보다 전체 의미를 먼저 잡아보세요.</p><div class="card"><div id="contentPassage" class="reading"></div><div class="tip">💡 “그래서 이 글이 하고 싶은 말은 뭐지?”를 생각해보세요.</div><div class="actions"><button class="btn" onclick="showD('write')">다 읽었어요 →</button></div></div></section>
+<section id="write" class="screen"><button class="pillbtn" onclick="showD('read')">← 글 다시 보기</button><div class="ey" style="margin-top:20px">02 · EXPLAIN</div><h2>먼저, 내 생각을 설명해보세요.</h2><p>다른 사람의 답변을 보기 전에 <b>내가 이해한 내용을 내 말로</b> 정리해봅니다.</p><div class="lang"><button id="ko" class="on" onclick="lang('ko')">한국어</button><button id="en" onclick="lang('en')">English</button></div><div class="question"><small>TODAY'S QUESTION</small><b id="contentQuestion">이 글의 핵심 내용을 자유롭게 설명해보세요.</b></div><div class="textarea-wrap"><textarea id="txt" maxlength="300" placeholder="내가 이해한 내용을 자유롭게 써보세요."></textarea><div class="count"><span id="cnt">0</span> / 300</div></div><p class="sub" style="font-size:13px">정답을 맞히는 문제가 아닙니다. 내가 어떻게 이해했는지가 중요합니다.</p>
 <div class="divider" style="margin:28px 0"></div>
 <div class="my-note" style="margin-top:18px">
   <b style="color:#111">🌱 생각의 확장 <span style="font-weight:400;color:#999">(선택)</span></b><br>
@@ -120,7 +125,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     <b style="color:#111">정답만 비교하지 마세요.</b><br>
     다른 독자의 해석과 함께, 글에서 어떤 경험과 생각으로 가지를 뻗어갔는지도 만나보세요.
   </div>
-<div class="top"><div><div class="ey">03 · COMPARE</div><h1 style="font-size:34px">다른 독자들은<br>어떻게 읽었을까요?</h1><p class="sub">내 생각을 먼저 만든 뒤, 다른 독자들의 관점을 만나보세요.</p></div><div class="num"><b>127명</b>이 오늘의 글을 읽었어요.</div></div><div class="question"><small>TODAY'S QUESTION</small><b>이 글이 말하고자 하는 내용을 자신의 말로 설명해보세요.</b></div><div id="myCompareAnswer" class="answer-card" style="background:#f5f5f2;border-color:#dcdcd7;margin-top:24px"><div class="person"><span class="avatar">나</span><b>내가 쓴 생각</b></div><div id="myCompareMain" class="answer" style="margin-bottom:10px"></div><div id="myCompareThought"></div></div><div class="toolbar"><b>다른 독자들의 생각</b><div class="sort"><button class="on" onclick="sort('all',this)">전체</button><button onclick="sort('different',this)">새로운 관점</button><button onclick="sort('new',this)">최신</button></div></div><div id="feed"><article class="answer-card" data-kind="all"><div class="person"><span class="avatar">민</span>민○○ <span class="time">· 2시간 전</span></div><div class="answer">“정보가 많으면 더 좋은 결정을 할 수 있을 것 같지만, 너무 많은 정보가 오히려 <b>무엇이 중요한지 판단하기 어렵게 만들 수 있다</b>는 내용이라고 생각했다.”</div><span class="tag">🎯 핵심 내용</span><div class="my-note" style="margin-top:14px;padding:13px 14px"><b style="color:#111">🌱 생각의 확장</b><br><span style="color:#666">정보가 많아질수록 선택지가 늘어나는 만큼, 무엇을 믿을지 결정하는 일도 어려워질 수 있겠다고 생각했다.</span></div><div class="react"><button onclick="react(this)">💡 새로운 관점 24</button><button onclick="react(this)">🎯 핵심을 잘 짚었어요 18</button></div></article><article class="answer-card" data-kind="different"><div class="person"><span class="avatar">J</span>J○○ <span class="time">· 1시간 전</span></div><div class="answer">문제는 정보의 양 자체가 아니라, <b>어떤 정보를 중요하게 보고 어떤 정보를 버릴 수 있느냐</b>에 있다는 뜻으로 이해했다.</div><span class="tag">💡 새로운 관점</span><div class="my-note" style="margin-top:14px;padding:13px 14px"><b style="color:#111">🌱 생각의 확장</b><br><span style="color:#666">뉴스나 검색 결과를 볼 때도 모든 정보를 확인하려 하기보다, 지금 필요한 정보가 무엇인지 먼저 정하는 게 중요할 것 같다.</span></div><div class="react"><button onclick="react(this)">💡 새로운 관점 16</button></div></article><article class="answer-card" data-kind="all"><div class="person"><span class="avatar">박</span>박○○ <span class="time">· 38분 전</span></div><div class="answer">정보가 많아질수록 선택의 폭은 넓어지지만, 오히려 <b>결정을 내릴 때 확신이 줄어들 수 있다</b>는 이야기 같다.</div><span class="tag">🔍 문맥 추론</span><div class="my-note" style="margin-top:14px;padding:13px 14px"><b style="color:#111">🌱 생각의 확장</b><br><span style="color:#666">선택지가 많으면 자유로워진다고 생각하지만, 실제로는 결정을 미루게 되는 경험도 자주 생기는 것 같다.</span></div><div class="react"><button onclick="react(this)">🎯 핵심을 잘 짚었어요 12</button></div></article><article class="answer-card" data-kind="new"><div class="person"><span class="avatar">S</span>S○○ <span class="time">· 12분 전</span></div><div class="answer">More information isn't always useful. Sometimes, <b>knowing what to ignore is more important.</b></div><span class="tag">English answer</span><div class="my-note" style="margin-top:14px;padding:13px 14px"><b style="color:#111">🌱 생각의 확장</b><br><span style="color:#666">The same idea appears when we browse too many reviews before buying something: more information can make the choice harder.</span></div><div class="react"><button onclick="react(this)">💡 새로운 관점 9</button></div></article><article class="answer-card" data-kind="different"><div class="person"><span class="avatar">윤</span>윤○○ <span class="time">· 3시간 전</span></div><div class="answer">정보를 많이 모으는 것이 안전하다고 생각하지만, 실제로는 <b>정보를 걸러내는 능력도 의사결정의 일부</b>라는 점이 흥미로웠다.</div><span class="tag">💡 새로운 관점</span><div class="react"><button onclick="react(this)">💡 새로운 관점 7</button></div></article></div><div class="section" style="padding:65px 0 0"><div class="ey">TODAY'S READERS</div><h2>오늘 독자들이 주목한 것</h2><div class="insight"><p style="margin-top:0;color:#666">127개의 답변을 분석해보니, 같은 글에서도 주목한 지점이 달랐어요.</p><div class="barrow"><span>정보의 양</span><div class="bar"><span style="width:42%"></span></div><b>42%</b></div><div class="barrow"><span>판단의 어려움</span><div class="bar"><span style="width:31%"></span></div><b>31%</b></div><div class="barrow"><span>무엇을 무시할지</span><div class="bar"><span style="width:18%"></span></div><b>18%</b></div><div class="barrow"><span>기타</span><div class="bar"><span style="width:9%"></span></div><b>9%</b></div></div><div class="take"><b>READLY'S TAKE</b><p>이 글의 핵심은 정보가 많다고 해서 반드시 더 좋은 결정을 내릴 수 있는 것은 아니라는 것입니다. 특히 <b>“knowing what to ignore”</b>가 중요한 단서입니다.</p></div><div class="actions"><button class="btn" onclick="showD('complete')">오늘의 독해 마치기 →</button></div></div></section>
+<div class="top"><div><div class="ey">03 · COMPARE</div><h1 style="font-size:34px">다른 독자들은<br>어떻게 읽었을까요?</h1><p class="sub">내 생각을 먼저 만든 뒤, 다른 독자들의 관점을 만나보세요.</p></div><div class="num"><b>127명</b>이 오늘의 글을 읽었어요.</div></div><div class="question"><small>TODAY'S QUESTION</small><b id="compareQuestion">이 글이 말하고자 하는 내용을 자신의 말로 설명해보세요.</b></div><div id="myCompareAnswer" class="answer-card" style="background:#f5f5f2;border-color:#dcdcd7;margin-top:24px"><div class="person"><span class="avatar">나</span><b>내가 쓴 생각</b></div><div id="myCompareMain" class="answer" style="margin-bottom:10px"></div><div id="myCompareThought"></div></div><div class="toolbar"><b>다른 독자들의 생각</b><div class="sort"><button class="on" onclick="sort('all',this)">전체</button><button onclick="sort('different',this)">새로운 관점</button><button onclick="sort('new',this)">최신</button></div></div><div id="feed"><article class="answer-card" data-kind="all"><div class="person"><span class="avatar">민</span>민○○ <span class="time">· 2시간 전</span></div><div class="answer">“정보가 많으면 더 좋은 결정을 할 수 있을 것 같지만, 너무 많은 정보가 오히려 <b>무엇이 중요한지 판단하기 어렵게 만들 수 있다</b>는 내용이라고 생각했다.”</div><span class="tag">🎯 핵심 내용</span><div class="my-note" style="margin-top:14px;padding:13px 14px"><b style="color:#111">🌱 생각의 확장</b><br><span style="color:#666">정보가 많아질수록 선택지가 늘어나는 만큼, 무엇을 믿을지 결정하는 일도 어려워질 수 있겠다고 생각했다.</span></div><div class="react"><button onclick="react(this)">💡 새로운 관점 24</button><button onclick="react(this)">🎯 핵심을 잘 짚었어요 18</button></div></article><article class="answer-card" data-kind="different"><div class="person"><span class="avatar">J</span>J○○ <span class="time">· 1시간 전</span></div><div class="answer">문제는 정보의 양 자체가 아니라, <b>어떤 정보를 중요하게 보고 어떤 정보를 버릴 수 있느냐</b>에 있다는 뜻으로 이해했다.</div><span class="tag">💡 새로운 관점</span><div class="my-note" style="margin-top:14px;padding:13px 14px"><b style="color:#111">🌱 생각의 확장</b><br><span style="color:#666">뉴스나 검색 결과를 볼 때도 모든 정보를 확인하려 하기보다, 지금 필요한 정보가 무엇인지 먼저 정하는 게 중요할 것 같다.</span></div><div class="react"><button onclick="react(this)">💡 새로운 관점 16</button></div></article><article class="answer-card" data-kind="all"><div class="person"><span class="avatar">박</span>박○○ <span class="time">· 38분 전</span></div><div class="answer">정보가 많아질수록 선택의 폭은 넓어지지만, 오히려 <b>결정을 내릴 때 확신이 줄어들 수 있다</b>는 이야기 같다.</div><span class="tag">🔍 문맥 추론</span><div class="my-note" style="margin-top:14px;padding:13px 14px"><b style="color:#111">🌱 생각의 확장</b><br><span style="color:#666">선택지가 많으면 자유로워진다고 생각하지만, 실제로는 결정을 미루게 되는 경험도 자주 생기는 것 같다.</span></div><div class="react"><button onclick="react(this)">🎯 핵심을 잘 짚었어요 12</button></div></article><article class="answer-card" data-kind="new"><div class="person"><span class="avatar">S</span>S○○ <span class="time">· 12분 전</span></div><div class="answer">More information isn't always useful. Sometimes, <b>knowing what to ignore is more important.</b></div><span class="tag">English answer</span><div class="my-note" style="margin-top:14px;padding:13px 14px"><b style="color:#111">🌱 생각의 확장</b><br><span style="color:#666">The same idea appears when we browse too many reviews before buying something: more information can make the choice harder.</span></div><div class="react"><button onclick="react(this)">💡 새로운 관점 9</button></div></article><article class="answer-card" data-kind="different"><div class="person"><span class="avatar">윤</span>윤○○ <span class="time">· 3시간 전</span></div><div class="answer">정보를 많이 모으는 것이 안전하다고 생각하지만, 실제로는 <b>정보를 걸러내는 능력도 의사결정의 일부</b>라는 점이 흥미로웠다.</div><span class="tag">💡 새로운 관점</span><div class="react"><button onclick="react(this)">💡 새로운 관점 7</button></div></article></div><div class="section" style="padding:65px 0 0"><div class="ey">TODAY'S READERS</div><h2>오늘 독자들이 주목한 것</h2><div class="insight"><p style="margin-top:0;color:#666">127개의 답변을 분석해보니, 같은 글에서도 주목한 지점이 달랐어요.</p><div class="barrow"><span>정보의 양</span><div class="bar"><span style="width:42%"></span></div><b>42%</b></div><div class="barrow"><span>판단의 어려움</span><div class="bar"><span style="width:31%"></span></div><b>31%</b></div><div class="barrow"><span>무엇을 무시할지</span><div class="bar"><span style="width:18%"></span></div><b>18%</b></div><div class="barrow"><span>기타</span><div class="bar"><span style="width:9%"></span></div><b>9%</b></div></div><div class="take"><b>READLY'S TAKE</b><p>이 글의 핵심은 정보가 많다고 해서 반드시 더 좋은 결정을 내릴 수 있는 것은 아니라는 것입니다. 특히 <b>“knowing what to ignore”</b>가 중요한 단서입니다.</p></div><div class="actions"><button class="btn" onclick="showD('complete')">오늘의 독해 마치기 →</button></div></div></section>
 
 
 <section id="signup" class="screen">
@@ -254,7 +259,39 @@ function render(){let q=qs[n];sel=null;$('skill').textContent=q[0];$('diff').tex
 function pick(i,b){sel=i;document.querySelectorAll('.choice').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');$('next').disabled=false}
 function nextQ(){if(sel===null)return;ans.push(sel);if(n<4){n++;render();scrollTo(0,0)}else showResult()}
 function showResult(){$('test').classList.add('hidden');$('result').classList.remove('hidden');let s=ans.reduce((a,x,i)=>a+(x===qs[i][4]?1:0),0);let levels=['기초 독해','중급 독해','중상급 독해','고급 독해','상위권 독해','상위권 독해'];$('level').textContent=levels[s];$('score').textContent='5문제 중 '+s+'문제 정답';let diags=['기본적인 의미 파악부터 차근히 훈련해보세요. 특히 문맥을 연결하는 연습을 꾸준히 해보면 좋아요.','핵심 의미는 파악하지만 논리와 맥락에서 더 많은 훈련이 필요합니다.','기본적인 독해력은 갖추고 있습니다. 복잡한 논리와 추론을 더 훈련해보세요.','기본적인 독해력은 갖추고 있습니다. 더 복잡한 맥락과 저자의 의도에 도전해보세요.','핵심과 논리를 안정적으로 파악합니다. 이제 다른 관점까지 비교하며 독해를 확장해보세요.','핵심 의미부터 숨은 전제까지 안정적으로 추론합니다. 다른 관점을 비교하며 깊이를 더해보세요.'];$('diag').textContent=diags[s];$('answers').innerHTML='';qs.forEach((q,i)=>{let ok=ans[i]===q[4],d=document.createElement('div');d.className='acard';d.innerHTML='<div class="ahead"><strong>'+(i+1)+'. '+q[0]+'</strong><span class="'+(ok?'ok':'bad')+'">'+(ok?'✓ 정답':'✕ 오답')+'</span></div><div class="detail">내 답: <b>'+String.fromCharCode(65+ans[i])+'</b> · 정답: <b>'+String.fromCharCode(65+q[4])+'</b><p><b>왜 그럴까요?</b><br>'+q[5]+'</p></div>'; $('answers').appendChild(d)});scrollTo(0,0)}
-function goDaily(){$('result').classList.add('hidden');$('daily').classList.remove('hidden');showD('dhome')}
+async function loadCurrentContent(){
+  try{
+    const { data, error } = await supabaseClient
+      .from('contents')
+      .select('id, title, passage, question, published_at')
+      .lte('published_at', new Date().toISOString())
+      .order('published_at', { ascending:false })
+      .limit(1)
+      .maybeSingle();
+
+    if(error) throw error;
+    if(data){ currentContent = data; }
+
+    const title=$('contentTitle');
+    const passage=$('contentPassage');
+    const question=$('contentQuestion');
+    const compareQuestion=$('compareQuestion');
+
+    if(title) title.textContent='‘'+currentContent.title+'’';
+    if(passage) passage.innerHTML=currentContent.passage.split(/\n\s*\n/).map(p=>'<p>'+escapeHtml(p)+'</p>').join('');
+    if(question) question.textContent=currentContent.question;
+    if(compareQuestion) compareQuestion.textContent=currentContent.question;
+  }catch(e){
+    console.error('콘텐츠 불러오기 오류:', e);
+  }
+}
+
+async function goDaily(){
+  $('result').classList.add('hidden');
+  $('daily').classList.remove('hidden');
+  await loadCurrentContent();
+  showD('dhome');
+}
 function saveDailyState(id){
   localStorage.setItem('readly_daily_screen', id);
 }
@@ -282,7 +319,7 @@ function submitAnswer(){
   localStorage.setItem('readly_today_answer', JSON.stringify({
     answer:answer,
     thought:thought,
-    content_id:DAILY_CONTENT_ID,
+    content_id:currentContent.id,
     date:new Date().toLocaleDateString('ko-KR')
   }));
   localStorage.removeItem('readly_answer_draft');
@@ -322,7 +359,7 @@ async function loadSavedAnswer(){
       .from('answers')
       .select('answer, thought, content_id, created_at')
       .eq('user_id', user.id)
-      .eq('content_id', DAILY_CONTENT_ID)
+      .eq('content_id', currentContent.id)
       .order('created_at', { ascending:false })
       .limit(1)
       .maybeSingle();
@@ -361,7 +398,7 @@ async function savePendingAnswerToSupabase(){
     .from('answers')
     .insert({
       user_id:user.id,
-      content_id:saved.content_id || DAILY_CONTENT_ID,
+      content_id:saved.content_id || currentContent.id,
       answer:saved.answer,
       thought:saved.thought || null,
       language:'ko'
@@ -439,9 +476,11 @@ document.addEventListener('DOMContentLoaded', function(){
     $('daily').classList.remove('hidden');
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     $(savedScreen).classList.add('active');
-    if(savedScreen==='my') loadSavedAnswer();
-    if(savedScreen==='compare') loadCompareAnswer();
-    if(savedScreen==='write') loadDrafts();
+    loadCurrentContent().then(()=>{
+      if(savedScreen==='my') loadSavedAnswer();
+      if(savedScreen==='compare') loadCompareAnswer();
+      if(savedScreen==='write') loadDrafts();
+    });
   }
 });
 
