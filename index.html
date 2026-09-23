@@ -369,29 +369,37 @@ function formatCommunityDate(value){
 }
 
 function renderCommunityAnswers(items){
+
   const feed=$('feed');
   if(!feed) return;
+
   feed.innerHTML='';
+
   if(!items.length){
     feed.innerHTML='<div class="archive-empty">아직 다른 독자의 답변이 없어요. 첫 번째 생각을 남겨보세요.</div>';
     return;
   }
 
   items.forEach((item,index)=>{
+
     const article=document.createElement('article');
     article.className='answer-card';
     article.dataset.kind=index===0?'new':'all';
 
     const person=document.createElement('div');
     person.className='person';
+
     const avatar=document.createElement('span');
     avatar.className='avatar';
     avatar.textContent='독자';
+
     person.appendChild(avatar);
     person.appendChild(document.createTextNode('독자'));
+
     const time=document.createElement('span');
     time.className='time';
     time.textContent=' · '+formatCommunityDate(item.created_at);
+
     person.appendChild(time);
 
     const answer=document.createElement('div');
@@ -402,22 +410,81 @@ function renderCommunityAnswers(items){
     article.appendChild(answer);
 
     if(item.thought){
+
       const thought=document.createElement('div');
+
       thought.className='my-note';
       thought.style.marginTop='14px';
       thought.style.padding='13px 14px';
+
       thought.innerHTML='<b style="color:#111">🌱 생각의 확장</b><br><span style="color:#666"></span>';
+
       thought.querySelector('span').textContent=item.thought;
+
       article.appendChild(thought);
+
     }
 
     const tag=document.createElement('span');
     tag.className='tag';
     tag.textContent=item.language==='en'?'English answer':'독자의 생각';
+
     article.appendChild(tag);
 
+    const reactions=document.createElement('div');
+    reactions.style.display='flex';
+    reactions.style.gap='8px';
+    reactions.style.marginTop='12px';
+
+    const idea=document.createElement('button');
+    idea.className='react-btn';
+    idea.textContent='💡 새로운 관점 0';
+    idea.onclick=()=>react(idea,item.id,'idea');
+
+    const agree=document.createElement('button');
+    agree.className='react-btn';
+    agree.textContent='🎯 핵심을 잘 짚었어요 0';
+    agree.onclick=()=>react(agree,item.id,'agree');
+
+    reactions.appendChild(idea);
+    reactions.appendChild(agree);
+
+    article.appendChild(reactions);
+loadReactionState(item.id, idea, agree);
     feed.appendChild(article);
+
   });
+async function loadReactionState(answerId, ideaButton, agreeButton){
+  const {data:{user}} = await supabaseClient.auth.getUser();
+
+  const {data:rows, error} = await supabaseClient
+    .from('answer_reactions')
+    .select('user_id,reaction')
+    .eq('answer_id', answerId);
+
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  const ideaCount = rows.filter(r=>r.reaction==='idea').length;
+  const agreeCount = rows.filter(r=>r.reaction==='agree').length;
+
+  ideaButton.textContent='💡 새로운 관점 '+ideaCount;
+  agreeButton.textContent='🎯 핵심을 잘 짚었어요 '+agreeCount;
+
+  if(user){
+    ideaButton.classList.toggle(
+      'on',
+      rows.some(r=>r.user_id===user.id && r.reaction==='idea')
+    );
+
+    agreeButton.classList.toggle(
+      'on',
+      rows.some(r=>r.user_id===user.id && r.reaction==='agree')
+    );
+  }
+}
 }
 
 async function loadCommunityAnswers(){
@@ -591,7 +658,52 @@ async function savePendingAnswerToSupabase(){
 }
 function escapeHtml(str){return String(str).replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\'':'&#39;','"':'&quot;'}[c]})}
 
-function react(b){b.classList.toggle('on')}
+async function react(b, answerId, reaction){
+  const {data:{user}} = await supabaseClient.auth.getUser();
+
+  if(!user){
+    alert('로그인 후 반응을 남길 수 있어요.');
+    return;
+  }
+
+  const {data:existing, error:findError} = await supabaseClient
+    .from('answer_reactions')
+    .select('id')
+    .eq('answer_id', answerId)
+    .eq('user_id', user.id)
+    .eq('reaction', reaction)
+    .maybeSingle();
+
+  if(findError){
+    console.error(findError);
+    return;
+  }
+
+  let error;
+
+  if(existing){
+    ({error} = await supabaseClient
+      .from('answer_reactions')
+      .delete()
+      .eq('id', existing.id));
+  }else{
+    ({error} = await supabaseClient
+      .from('answer_reactions')
+      .insert({
+        answer_id: answerId,
+        user_id: user.id,
+        reaction: reaction
+      }));
+  }
+
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  b.classList.toggle('on', !existing);
+  loadReactionState(answerId, b.parentElement.children[0], b.parentElement.children[1]);
+}
 function sort(k,b){document.querySelectorAll('.sort button').forEach(x=>x.classList.remove('on'));b.classList.add('on');let f=$('feed'),a=[...f.children];if(k==='different')a.sort((x,y)=>(y.dataset.kind==='different')-(x.dataset.kind==='different'));if(k==='new')a.sort((x,y)=>(y.dataset.kind==='new')-(x.dataset.kind==='new'));a.forEach(x=>f.appendChild(x))}
 function backToLanding(){$('daily').classList.add('hidden');$('landing').classList.remove('hidden');scrollTo(0,0)}
 function goHome(){
