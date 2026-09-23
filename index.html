@@ -207,26 +207,11 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 <div class="my-section-title">
     <h2>💭 나의 답변</h2><span>18 ANSWERS</span>
   </div>
-  <div id="savedAnswerBox" class="my-note" style="background:#fff;border:1px solid #e3e3df;color:#666">오늘 작성한 답변이 있으면 여기에 저장됩니다.</div>
-  <article class="my-answer">
-    <div class="date">오늘 · 정보가 많을수록 더 좋은 결정을 할까?</div>
-    <div class="title">“정보가 많으면 좋을 것 같지만, 무엇이 중요한지 판단하기 어려워질 수도 있다.”</div>
-    <div style="margin-top:12px;padding:12px 13px;background:#f5f5f2;border-radius:12px;font-size:12px;line-height:1.6;color:#666">
-      <b style="color:#111">🌱 생각의 확장</b><br>
-      “넷플릭스에서 볼 콘텐츠를 고르다가 밥을 다 먹은 적이 있다. 선택지가 너무 많은 것도 일종의 풍요 속 빈곤인 것 같다.”
-    </div>
-    <div class="stickers"><span class="sticker">💡 8</span><span class="sticker">🎯 4</span></div>
-  </article>
-  <article class="my-answer">
-    <div class="date">어제 · 속도와 의사결정</div>
-    <div class="title">“빠르게 결정하는 것이 항상 좋은 결과로 이어지는 것은 아니다.”</div>
-    <div class="stickers"><span class="sticker">💡 5</span><span class="sticker">🎯 7</span><span class="sticker">🤔 1</span></div>
-  </article>
-  <article class="my-answer">
-    <div class="date">2026.09.12 · 편리함의 대가</div>
-    <div class="title">“시간을 절약한 것처럼 보여도 새로운 일이 생기면 결국 다른 비용을 치르게 된다.”</div>
-    <div class="stickers"><span class="sticker">💡 3</span><span class="sticker">🎯 2</span></div>
-  </article>
+ <div id="savedAnswerBox" class="my-note" style="background:#fff;border:1px solid #e3e3df;color:#666">
+  <div id="myAnswersList">
+    내가 작성한 답변을 불러오는 중...
+  </div>
+</div>
 
   <div class="my-note">
     <b style="color:#111">APRICITY는 정답만 기록하지 않습니다.</b><br>
@@ -588,44 +573,76 @@ function loadCompareAnswer(){
 async function loadSavedAnswer(){
   const box=document.getElementById('savedAnswerBox');
   if(!box) return;
-  box.innerHTML='내 답변을 불러오는 중…';
+
+  box.innerHTML='<div id="myAnswersList">내 답변을 불러오는 중...</div>';
 
   try{
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    const {data:{user}}=await supabaseClient.auth.getUser();
+
     if(!user){
-      box.innerHTML='로그인 후 나의 답변을 확인할 수 있어요.';
+      box.innerHTML='<div id="myAnswersList">로그인 후 나의 답변을 확인할 수 있어요.</div>';
       return;
     }
 
-    const { data, error } = await supabaseClient
+    const {data:answers,error}=await supabaseClient
       .from('answers')
-      .select('answer, thought, content_id, created_at')
-      .eq('user_id', user.id)
-      .eq('content_id', DAILY_CONTENT_ID)
-      .order('created_at', { ascending:false })
-      .limit(1)
-      .maybeSingle();
+      .select('id,answer,thought,content_id,created_at')
+      .eq('user_id',user.id)
+      .order('created_at',{ascending:false});
 
-    if(error){
-      console.error('답변 불러오기 오류:', error);
-      box.innerHTML='답변을 불러오지 못했어요. 잠시 후 다시 확인해주세요.';
+    if(error) throw error;
+
+    if(!answers || !answers.length){
+      box.innerHTML='<div id="myAnswersList">아직 작성한 답변이 없어요.<br>오늘의 독해에서 첫 번째 생각을 남겨보세요.</div>';
       return;
     }
 
-    if(!data || !data.answer){
-      box.innerHTML='아직 작성한 답변이 없습니다.';
-      return;
-    }
+    const contentIds=[...new Set(answers.map(item=>item.content_id).filter(Boolean))];
 
-    let html='<b style="color:#111">내가 쓴 답변</b><div style="margin-top:8px;line-height:1.7">'+escapeHtml(data.answer)+'</div>';
-    if(data.thought){
-      html+='<div style="margin-top:14px;padding:12px 13px;background:#f5f5f2;border-radius:12px;line-height:1.6"><b style="color:#111">🌱 생각의 확장</b><br>'+escapeHtml(data.thought)+'</div>';
-    }
-    html+='<div style="font-size:11px;color:#999;margin-top:8px">내 APRICITY 계정에 저장되어 있어요.</div>';
+    const {data:contents}=await supabaseClient
+      .from('contents')
+      .select('id,title')
+      .in('id',contentIds);
+
+    const titleMap={};
+    (contents||[]).forEach(item=>{
+      titleMap[item.id]=item.title;
+    });
+
+    let html='<div id="myAnswersList">';
+
+    answers.forEach(item=>{
+      const date=new Date(item.created_at).toLocaleDateString('ko-KR');
+      const title=titleMap[item.content_id] || '오늘의 독해';
+
+      html+=`
+        <article class="my-answer" style="padding:16px 0;border-bottom:1px solid #eee;">
+          <div class="date" style="font-size:12px;color:#999;">${date}</div>
+          <div class="title" style="margin-top:6px;font-weight:600;color:#222;">
+            ${escapeHtml(title)}
+          </div>
+          <div style="margin-top:10px;line-height:1.7;color:#555;">
+            ${escapeHtml(item.answer || '')}
+          </div>
+          ${
+            item.thought
+            ? `<div style="margin-top:12px;padding:12px;background:#f5f5f2;border-radius:12px;font-size:12px;line-height:1.6;color:#666;">
+                <b style="color:#111;">🌱 생각의 확장</b><br>
+                ${escapeHtml(item.thought)}
+              </div>`
+            : ''
+          }
+        </article>
+      `;
+    });
+
+    html+='</div>';
+
     box.innerHTML=html;
-  }catch(e){
-    console.error(e);
-    box.innerHTML='답변을 불러오지 못했어요. 잠시 후 다시 확인해주세요.';
+
+  }catch(error){
+    console.error('나의 답변 불러오기 오류:',error);
+    box.innerHTML='<div id="myAnswersList">답변을 불러오지 못했어요. 잠시 후 다시 확인해주세요.</div>';
   }
 }
 
