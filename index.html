@@ -608,10 +608,25 @@ async function loadSavedAnswer(){
     (contents||[]).forEach(item=>{
       titleMap[item.id]=item.title;
     });
+const answerIds=answers.map(item=>item.id);
 
+let reactions=[];
+
+if(answerIds.length){
+  const {data:reactionData,error:reactionError}=await supabaseClient
+    .from('answer_reactions')
+    .select('answer_id,reaction')
+    .in('answer_id',answerIds);
+
+  if(reactionError) throw reactionError;
+
+  reactions=reactionData||[];
+}
     let html='<div id="myAnswersList">';
 
     answers.forEach(item=>{
+      const ideaCount=reactions.filter(r=>r.answer_id===item.id && r.reaction==='idea').length;
+const agreeCount=reactions.filter(r=>r.answer_id===item.id && r.reaction==='agree').length;
       const date=new Date(item.created_at).toLocaleDateString('ko-KR');
       const title=titleMap[item.content_id] || '오늘의 독해';
 
@@ -632,6 +647,10 @@ async function loadSavedAnswer(){
               </div>`
             : ''
           }
+              <div style="display:flex;gap:8px;margin-top:12px;font-size:12px;color:#777;">
+      <span>💡 새로운 관점 ${ideaCount}</span>
+      <span>🎯 핵심을 잘 짚었어요 ${agreeCount}</span>
+    </div>
         </article>
       `;
     });
