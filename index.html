@@ -589,67 +589,7 @@ async function checkAttendance(){
     button.disabled=true;
   }
 }
-  function localDateString(d=new Date()){
-  const y=d.getFullYear();
-  const m=String(d.getMonth()+1).padStart(2,'0');
-  const day=String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${day}`;
-}
-
-async function checkAttendance(){
-  const message=document.getElementById('attendanceMessage');
-  const button=document.getElementById('attendanceBtn');
-
-  const {data:{user}}=await supabaseClient.auth.getUser();
-
-  if(!user){
-    alert('로그인 후 출석할 수 있어요.');
-    return;
-  }
-
-  const today=localDateString();
-
-  const {data:existing,error:findError}=await supabaseClient
-    .from('attendance')
-    .select('id')
-    .eq('user_id',user.id)
-    .eq('attendance_date',today)
-    .maybeSingle();
-
-  if(findError){
-    console.error('출석 확인 오류:',findError);
-    alert('출석을 확인하지 못했어요. 잠시 후 다시 시도해주세요.');
-    return;
-  }
-
-  if(existing){
-    if(message) message.textContent='오늘 출석을 이미 완료했어요. 🔥';
-    if(button){
-      button.textContent='오늘 출석 완료 ✓';
-      button.disabled=true;
-    }
-    return;
-  }
-
-  const {error}=await supabaseClient
-    .from('attendance')
-    .insert({
-      user_id:user.id,
-      attendance_date:today
-    });
-
-  if(error){
-    console.error('출석 저장 오류:',error);
-    alert('출석 저장에 실패했어요. 잠시 후 다시 시도해주세요.');
-    return;
-  }
-
-  if(message) message.textContent='오늘도 생각을 이어갔어요. 🔥';
-  if(button){
-    button.textContent='오늘 출석 완료 ✓';
-    button.disabled=true;
-  }
-}
+ 
 function showD(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
