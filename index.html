@@ -589,11 +589,50 @@ async function checkAttendance(){
     button.disabled=true;
   }
 }
- 
+ async function loadAttendanceStatus(){
+  const message=document.getElementById('attendanceMessage');
+  const button=document.getElementById('attendanceBtn');
+
+  if(!message || !button) return;
+
+  const {data:{user}}=await supabaseClient.auth.getUser();
+
+  if(!user){
+    message.textContent='로그인 후 오늘의 출석을 남겨보세요.';
+    button.textContent='로그인 후 출석하기';
+    button.disabled=false;
+    return;
+  }
+
+  const today=localDateString();
+
+  const {data:existing,error}=await supabaseClient
+    .from('attendance')
+    .select('id')
+    .eq('user_id',user.id)
+    .eq('attendance_date',today)
+    .maybeSingle();
+
+  if(error){
+    console.error('오늘 출석 상태 확인 오류:',error);
+    return;
+  }
+
+  if(existing){
+    message.textContent='오늘도 생각을 이어갔어요. 🔥';
+    button.textContent='오늘 출석 완료 ✓';
+    button.disabled=true;
+  }else{
+    message.textContent='오늘의 출석을 남겨보세요.';
+    button.textContent='오늘 출석하기';
+    button.disabled=false;
+  }
+}
 function showD(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   saveDailyState(id);
+  if(id==='dhome') loadAttendanceStatus();
   if(id==='my') loadSavedAnswer();
   if(id==='compare'){ loadCompareAnswer(); loadCommunityAnswers(); }
   if(id==='write') loadDrafts();
