@@ -627,12 +627,60 @@ async function checkAttendance(){
     button.textContent='오늘 출석하기';
     button.disabled=false;
   }
+}async function loadAttendanceStreak(){
+  const header=document.querySelector('.dailyhead > div');
+  if(!header) return;
+
+  const {data:{user}}=await supabaseClient.auth.getUser();
+  if(!user) return;
+
+  const {data:rows,error}=await supabaseClient
+    .from('attendance')
+    .select('attendance_date')
+    .eq('user_id',user.id)
+    .order('attendance_date',{ascending:false});
+
+  if(error){
+    console.error('출석 기록 불러오기 오류:',error);
+    return;
+  }
+
+  const dates=new Set((rows||[]).map(row=>row.attendance_date));
+
+  let streak=0;
+  let checkDate=new Date();
+
+  while(true){
+    const dateString=localDateString(checkDate);
+
+    if(!dates.has(dateString)) break;
+
+    streak++;
+    checkDate.setDate(checkDate.getDate()-1);
+  }
+
+  if(streak===0){
+    checkDate=new Date();
+    checkDate.setDate(checkDate.getDate()-1);
+
+    while(true){
+      const dateString=localDateString(checkDate);
+
+      if(!dates.has(dateString)) break;
+
+      streak++;
+      checkDate.setDate(checkDate.getDate()-1);
+    }
+  }
+
+  header.textContent=`🔥 ${streak}일째 독해 습관`;
 }
 function showD(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   saveDailyState(id);
   if(id==='dhome') loadAttendanceStatus();
+  if(id==='dhome') loadAttendanceStreak();
   if(id==='my') loadSavedAnswer();
   if(id==='compare'){ loadCompareAnswer(); loadCommunityAnswers(); }
   if(id==='write') loadDrafts();
