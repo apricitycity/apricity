@@ -177,7 +177,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
       <div class="muted">지금까지 완료한 오늘의 독해</div>
       <div style="height:1px;background:#eee;margin:18px 0"></div>
       <div class="label">RECEIVED STICKERS</div>
-      <div class="big">47개</div>
+      <div id="receivedStickerCount" class="big">47개</div>
       <div class="muted">다른 독자들이 내 답변에 남긴 반응</div>
     </div>
   </div>
@@ -776,6 +776,8 @@ if(answerIds.length){
   if(reactionError) throw reactionError;
 
   reactions=reactionData||[];
+  const totalReactions=reactions.length;
+document.getElementById('receivedStickerCount').textContent=`${totalReactions}개`;
 }
     let html='<div id="myAnswersList">';
 
