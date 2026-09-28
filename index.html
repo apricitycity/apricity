@@ -173,7 +173,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     </div>
     <div class="my-stat">
       <div class="label">MY READING</div>
-      <div class="big">18회</div>
+      <div id="myReadingCount" class="big">18회</div>
       <div class="muted">지금까지 완료한 오늘의 독해</div>
       <div style="height:1px;background:#eee;margin:18px 0"></div>
       <div class="label">RECEIVED STICKERS</div>
@@ -746,7 +746,7 @@ async function loadSavedAnswer(){
       .order('created_at',{ascending:false});
 
     if(error) throw error;
-
+document.getElementById('myReadingCount').textContent = `${answers?.length || 0}회`;
     if(!answers || !answers.length){
       box.innerHTML='<div id="myAnswersList">아직 작성한 답변이 없어요.<br>오늘의 독해에서 첫 번째 생각을 남겨보세요.</div>';
       return;
