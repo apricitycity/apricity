@@ -166,7 +166,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
       <div class="label" style="color:#aaa">CURRENT STREAK</div>
       <div class="big">🔥 6일째</div>
       <div style="color:#bbb;font-size:13px">하루 5분의 독해를 이어가고 있어요.</div>
-      <div class="calendar">
+      <div id="attendanceCalendar" class="calendar">
         <span class="on">월</span><span class="on">화</span><span class="on">수</span><span class="on">목</span><span class="on">금</span><span>토</span><span class="today">일</span>
         <span class="on">1</span><span class="on">2</span><span class="on">3</span><span class="on">4</span><span class="on">5</span><span>6</span><span class="today">7</span>
       </div>
@@ -675,12 +675,54 @@ async function checkAttendance(){
 
   header.textContent=`🔥 ${streak}일째 독해 습관`;
 }
+  async function loadAttendanceCalendar(){
+  const calendar=document.getElementById('attendanceCalendar');
+  if(!calendar) return;
+
+  const {data:{user}}=await supabaseClient.auth.getUser();
+  if(!user) return;
+
+  const {data:rows,error}=await supabaseClient
+    .from('attendance')
+    .select('attendance_date')
+    .eq('user_id',user.id);
+
+  if(error){
+    console.error('출석 캘린더 불러오기 오류:',error);
+    return;
+  }
+
+  const dates=new Set((rows||[]).map(row=>row.attendance_date));
+  const weekdays=['일','월','화','수','목','금','토'];
+
+  let weekdayHtml='';
+  let dateHtml='';
+
+  for(let i=6;i>=0;i--){
+    const date=new Date();
+    date.setDate(date.getDate()-i);
+
+    const dateString=localDateString(date);
+    const day=String(date.getDate());
+    const weekday=weekdays[date.getDay()];
+    const isOn=dates.has(dateString);
+
+    weekdayHtml+=`<span class="${isOn ? 'on' : ''}">${weekday}</span>`;
+    dateHtml+=`<span class="${isOn ? 'on' : ''}">${day}</span>`;
+  }
+
+  calendar.innerHTML=`
+    ${weekdayHtml}
+    ${dateHtml}
+  `;
+}
 function showD(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $(id).classList.add('active');
   saveDailyState(id);
   if(id==='dhome') loadAttendanceStatus();
   if(id==='dhome') loadAttendanceStreak();
+  if(id==='dhome') loadAttendanceCalendar();
   if(id==='my') loadSavedAnswer();
   if(id==='compare'){ loadCompareAnswer(); loadCommunityAnswers(); }
   if(id==='write') loadDrafts();
