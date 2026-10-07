@@ -726,6 +726,7 @@ function showD(id){
   if(id==='dhome') loadAttendanceStreak();
   if(id==='dhome') loadAttendanceCalendar();
   if(id==='my') loadSavedAnswer();
+  if(id==='my') loadAttendanceStreak();
   if(id==='compare'){ loadCompareAnswer(); loadCommunityAnswers(); }
   if(id==='write') loadDrafts();
   scrollTo(0,0);
@@ -1011,7 +1012,7 @@ async function finishSignup(){
   if (!answerSaved) return;
 
   await loadSavedAnswer();
-  showD('dome');
+  showD('dhome');
 }
 
 
