@@ -164,7 +164,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
   <div class="my-grid">
     <div class="streak-card">
       <div class="label" style="color:#aaa">CURRENT STREAK</div>
-      <div class="big">🔥 6일째</div>
+      <div id="myStreak" class="big">🔥 0일째</div>
       <div style="color:#bbb;font-size:13px">하루 5분의 독해를 이어가고 있어요.</div>
       <div id="attendanceCalendar" class="calendar">
         <span class="on">월</span><span class="on">화</span><span class="on">수</span><span class="on">목</span><span class="on">금</span><span>토</span><span class="today">일</span>
@@ -674,6 +674,8 @@ async function checkAttendance(){
   }
 
   header.textContent=`🔥 ${streak}일째 독해 습관`;
+   const myStreak=document.getElementById('myStreak');
+if(myStreak) myStreak.textContent=`🔥 ${streak}일째`;
 }
   async function loadAttendanceCalendar(){
   const calendar=document.getElementById('attendanceCalendar');
