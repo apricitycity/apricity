@@ -383,10 +383,10 @@ function renderCommunityAnswers(items){
 
     const avatar=document.createElement('span');
     avatar.className='avatar';
-    avatar.textContent='독자';
+    avatar.textContent=item.nickname || '독자';
 
     person.appendChild(avatar);
-    person.appendChild(document.createTextNode('독자'));
+    person.appendChild(document.createTextNode(item.nickname || '독자'));
 
     const time=document.createElement('span');
     time.className='time';
@@ -511,8 +511,30 @@ async function loadCommunityAnswers(){
     feed.innerHTML='<div class="archive-empty">다른 독자들의 생각을 불러오지 못했어요. 잠시 후 다시 확인해주세요.</div>';
     return;
   }
+const userIds=[...new Set((data||[]).map(item=>item.user_id).filter(Boolean))];
 
-  renderCommunityAnswers(data || []);
+let profileMap={};
+
+if(userIds.length){
+  const {data:profiles,error:profileError}=await supabaseClient
+    .from('profiles')
+    .select('id,nickname')
+    .in('id',userIds);
+
+  if(profileError){
+    console.error('닉네임 불러오기 오류:',profileError);
+  }
+
+  (profiles||[]).forEach(profile=>{
+    profileMap[profile.id]=profile.nickname;
+  });
+}
+
+const answersWithProfiles=(data||[]).map(item=>({
+  ...item,
+  nickname:profileMap[item.user_id] || '독자'
+}));
+  renderCommunityAnswers(answersWithProfiles);
   const total=count || 0;
   if(summary) summary.textContent='이 글에 '+total+'개의 답변이 남겨져 있어요.';
   if(readerCount) readerCount.textContent=total+'명';
