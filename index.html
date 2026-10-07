@@ -437,16 +437,19 @@ function renderCommunityAnswers(items){
     agree.className='react-btn';
     agree.textContent='🎯 핵심을 잘 짚었어요 0';
     agree.onclick=()=>react(agree,item.id,'agree');
-
+const curious=document.createElement('button');
+curious.className='react-btn';
+curious.textContent='🤔 나는 다르게 읽었어요 0';
+curious.onclick=()=>react(curious,item.id,'curious');
     reactions.appendChild(idea);
     reactions.appendChild(agree);
-
+reactions.appendChild(curious);
     article.appendChild(reactions);
-loadReactionState(item.id, idea, agree);
+loadReactionState(item.id, idea, agree, curious);
     feed.appendChild(article);
 
   });
-async function loadReactionState(answerId, ideaButton, agreeButton){
+async function loadReactionState(answerId, ideaButton, agreeButton, curiousButton){
   const {data:{user}} = await supabaseClient.auth.getUser();
 
   const {data:rows, error} = await supabaseClient
@@ -461,10 +464,10 @@ async function loadReactionState(answerId, ideaButton, agreeButton){
 
   const ideaCount = rows.filter(r=>r.reaction==='idea').length;
   const agreeCount = rows.filter(r=>r.reaction==='agree').length;
-
+const curiousCount = rows.filter(r=>r.reaction==='curious').length;
   ideaButton.textContent='💡 새로운 관점 '+ideaCount;
   agreeButton.textContent='🎯 핵심을 잘 짚었어요 '+agreeCount;
-
+curiousButton.textContent='🤔 나는 다르게 읽었어요 '+curiousCount;
   if(user){
     ideaButton.classList.toggle(
       'on',
@@ -475,6 +478,10 @@ async function loadReactionState(answerId, ideaButton, agreeButton){
       'on',
       rows.some(r=>r.user_id===user.id && r.reaction==='agree')
     );
+    curiousButton.classList.toggle(
+  'on',
+  rows.some(r=>r.user_id===user.id && r.reaction==='curious')
+);
   }
 }
 }
@@ -995,7 +1002,7 @@ async function react(b, answerId, reaction){
   }
 
   b.classList.toggle('on', !existing);
-  loadReactionState(answerId, b.parentElement.children[0], b.parentElement.children[1]);
+  loadReactionState(answerId, b.parentElement.children[0], b.parentElement.children[1], b.parentElement.children[2]);
 }
 function sort(k,b){document.querySelectorAll('.sort button').forEach(x=>x.classList.remove('on'));b.classList.add('on');let f=$('feed'),a=[...f.children];if(k==='different')a.sort((x,y)=>(y.dataset.kind==='different')-(x.dataset.kind==='different'));if(k==='new')a.sort((x,y)=>(y.dataset.kind==='new')-(x.dataset.kind==='new'));a.forEach(x=>f.appendChild(x))}
 function backToLanding(){$('daily').classList.add('hidden');$('landing').classList.remove('hidden');scrollTo(0,0)}
