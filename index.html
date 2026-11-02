@@ -939,13 +939,13 @@ async function savePendingAnswerToSupabase(){
 
   const { error } = await supabaseClient
     .from('answers')
-    .insert({
+    .upsert({
       user_id:user.id,
       content_id:saved.content_id || DAILY_CONTENT_ID,
       answer:saved.answer,
       thought:saved.thought || null,
       language:'ko'
-    });
+    }, { onConflict: 'user_id,content_id' });
 
   // 이미 같은 콘텐츠를 저장한 경우에는 중복 저장하지 않고 계속 진행합니다.
   if(error && error.code !== '23505'){
