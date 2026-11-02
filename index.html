@@ -780,6 +780,7 @@ function submitAnswer(){
   }));
   localStorage.removeItem('readly_answer_draft');
   localStorage.removeItem('readly_expanded_thought');
+ savePendingAnswerToSupabase();
   showD('compare');
 }
 function loadDrafts(){
@@ -953,7 +954,7 @@ async function savePendingAnswerToSupabase(){
     return false;
   }
 
-  localStorage.removeItem('readly_today_answer');
+  //localStorage.removeItem('readly_today_answer');
   return true;
 }
 function escapeHtml(str){return String(str).replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\'':'&#39;','"':'&quot;'}[c]})}
